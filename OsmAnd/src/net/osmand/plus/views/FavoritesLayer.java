@@ -34,6 +34,9 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 	private DisplayMetrics dm;
 	private FavouritesDbHelper favorites;
 	private Bitmap favoriteIcon;
+	private Bitmap favoriteIconGreen;
+	private Bitmap favoriteIconBlue;
+	private Bitmap favoriteIconRed;
 	
 	
 	public FavoritesLayer(){
@@ -55,6 +58,9 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 		favorites = view.getApplication().getFavorites();
 		
 		favoriteIcon = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite);
+		favoriteIconGreen = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite_green);
+		favoriteIconBlue = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite_blue);
+		favoriteIconRed = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite_red);
 		
 	}
 	
@@ -83,10 +89,26 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 						&& o.getLongitude() <= latLonBounds.right ) {
 					int x = view.getRotatedMapXForPoint(o.getLatitude(), o.getLongitude());
 					int y = view.getRotatedMapYForPoint(o.getLatitude(), o.getLongitude());
-					canvas.drawBitmap(favoriteIcon, x - favoriteIcon.getWidth() / 2, 
-							y - favoriteIcon.getHeight(), paint);
+					Bitmap icon = getIcon(o.getCategory());
+					canvas.drawBitmap(icon, x - icon.getWidth() / 2, 
+							y - icon.getHeight(), paint);
 				}
 			}
+		}
+	}
+
+	private Bitmap getIcon(String category) {
+		if (category.contains(":green")) {
+			return this.favoriteIconGreen;
+		}
+		else if (category.contains(":blue")) {
+			return this.favoriteIconBlue;
+		}
+		else if (category.contains(":red")) {
+			return this.favoriteIconRed;
+		}
+		else {
+			return this.favoriteIcon;
 		}
 	}
 	
