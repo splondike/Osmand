@@ -12,6 +12,7 @@ import net.osmand.plus.ContextMenuAdapter;
 import net.osmand.plus.ContextMenuAdapter.OnContextMenuClick;
 import net.osmand.plus.FavouritesDbHelper;
 import net.osmand.plus.R;
+import net.osmand.plus.render.UserFavouriteIcons;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
@@ -30,7 +31,8 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 	private OsmandMapTileView view;
 	private Paint paint;
 	private FavouritesDbHelper favorites;
-	private Bitmap favoriteIcon;
+	private Bitmap defaultFavoriteIcon;
+	private UserFavouriteIcons userFavouriteIcons;
 	
 	
 	public FavoritesLayer(){
@@ -47,7 +49,8 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 		
 		favorites = view.getApplication().getFavorites();
 		
-		favoriteIcon = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite);
+		defaultFavoriteIcon = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite);
+		userFavouriteIcons = new UserFavouriteIcons(view.getApplication().getAppPath("favourite_icons"));
 		
 	}
 	
@@ -81,6 +84,11 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 						&& o.getLongitude() <= latLonBounds.right ) {
 					int x = (int) tileBox.getPixXFromLatLon(o.getLatitude(), o.getLongitude());
 					int y = (int) tileBox.getPixYFromLatLon(o.getLatitude(), o.getLongitude());
+
+					Bitmap favoriteIcon = this.userFavouriteIcons.get(o.getCategory()).otherwise(this.defaultFavoriteIcon);
+
+					canvas.drawBitmap(favIcon, x - favIcon.getWidth() / 2, 
+							y - favIcon.getHeight(), paint);
 					canvas.drawBitmap(favoriteIcon, x - favoriteIcon.getWidth() / 2, 
 							y - favoriteIcon.getHeight(), paint);
 				}
