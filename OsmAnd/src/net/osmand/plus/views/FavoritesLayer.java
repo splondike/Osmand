@@ -1,7 +1,9 @@
 package net.osmand.plus.views;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.osmand.access.AccessibleToast;
 import net.osmand.data.FavouritePoint;
@@ -12,7 +14,12 @@ import net.osmand.plus.ContextMenuAdapter;
 import net.osmand.plus.ContextMenuAdapter.OnContextMenuClick;
 import net.osmand.plus.FavouritesDbHelper;
 import net.osmand.plus.R;
+import net.osmand.plus.happycow.TimeExtractor;
+import net.osmand.plus.happycow.WeekIntervals;
 import net.osmand.plus.render.UserFavouriteIcons;
+
+import org.joda.time.DateTime;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
@@ -22,7 +29,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
+<<<<<<< HEAD
+=======
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+>>>>>>> Highlighting of happy cow favourites.
 import android.widget.Toast;
+
+import com.natpryce.maybe.Maybe;
 
 public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.IContextMenuProvider {
 
@@ -33,6 +47,7 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 	private FavouritesDbHelper favorites;
 	private Bitmap defaultFavoriteIcon;
 	private UserFavouriteIcons userFavouriteIcons;
+	private Resources resources;
 	
 	
 	public FavoritesLayer(){
@@ -51,7 +66,7 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 		
 		defaultFavoriteIcon = BitmapFactory.decodeResource(view.getResources(), R.drawable.poi_favourite);
 		userFavouriteIcons = new UserFavouriteIcons(view.getApplication().getAppPath("favourite_icons"));
-		
+		resources = view.getContext().getResources();
 	}
 	
 	private boolean calculateBelongs(int ex, int ey, int objx, int objy, int radius) {
@@ -87,12 +102,32 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 
 					Bitmap favoriteIcon = this.userFavouriteIcons.get(o.getCategory()).otherwise(this.defaultFavoriteIcon);
 
-					canvas.drawBitmap(favIcon, x - favIcon.getWidth() / 2, 
-							y - favIcon.getHeight(), paint);
-					canvas.drawBitmap(favoriteIcon, x - favoriteIcon.getWidth() / 2, 
-							y - favoriteIcon.getHeight(), paint);
+					BitmapDrawable favIconDrawable = new BitmapDrawable(resources, favoriteIcon);
+					Rect bounds = new Rect(x - favoriteIcon.getWidth() / 2, y - favoriteIcon.getHeight() / 2,
+										   x + favoriteIcon.getWidth() / 2, y + favoriteIcon.getHeight() / 2);
+					favIconDrawable.setBounds(bounds);
+
+					if (isNotOpen(o.getName())) {
+						favIconDrawable.setAlpha(128);
+					}
+					favIconDrawable.draw(canvas);
 				}
 			}
+		}
+	}
+
+	private Map<String, Maybe<WeekIntervals>> intervalsCache = new HashMap<String, Maybe<WeekIntervals>>();
+	private boolean isNotOpen(String description) {
+		Maybe<WeekIntervals> intervals = intervalsCache.get(description);
+		if (intervals == null) {
+			intervals = TimeExtractor.parseTimes(description);
+			this.intervalsCache.put(description, intervals);
+		}
+		if (intervals.isKnown()) {
+			return !intervals.iterator().next().contains(new DateTime());
+		}
+		else {
+			return false;
 		}
 	}
 	

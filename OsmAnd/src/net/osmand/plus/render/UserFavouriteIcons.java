@@ -4,10 +4,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.natpryce.maybe.Maybe;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import com.natpryce.maybe.Maybe;
 
 /**
  * Provides and caches references to the user supplied favourite icons.
