@@ -63,7 +63,7 @@ import com.natpryce.maybe.Maybe;
 		return result;
 	}
 
-	public static class DayRange implements TimeDescriptionElement, Iterable<Integer> {
+	/* package */ static class DayRange implements TimeDescriptionElement, Iterable<Integer> {
 		public final Integer startDay;
 		public final Integer endDay;
 		private final static Pattern sepPattern = Pattern.compile(" ?- ?");
@@ -152,6 +152,7 @@ import com.natpryce.maybe.Maybe;
 					if (this.dayVal() == endDay)
 						throw new NoSuchElementException("Out of days");
 
+					// TODO: Use the Day.nextDay method instead
 					this.current = this.current == 7 ? 1 : this.current+1;
 					return this.dayVal();
 				}
@@ -168,12 +169,17 @@ import com.natpryce.maybe.Maybe;
 		}
 	}
 
-	public static class Day implements TimeDescriptionElement, Iterable<Integer> {
+	/* package */ static class Day implements TimeDescriptionElement, Iterable<Integer> {
 		private static final String[] days = new String[] {"mon", "tue", "wed", "thur", "fri", "sat", "sun"};
 		public final Integer day;
 		public Day(Integer day) {
 			assert(day > 0 && day < 8);
 			this.day = day;
+		}
+
+		public static Integer nextDay(Integer currDay) {
+			assert(currDay > 0 && currDay < 8);
+			return currDay == 7 ? 1 : currDay+1;
 		}
 
 		public static Maybe<ParseResult<Day>> parse(String desc) {
@@ -247,16 +253,18 @@ import com.natpryce.maybe.Maybe;
 		}
 	}
 
-	public static class TimeRange implements TimeDescriptionElement {
+	/* package */ static class TimeRange implements TimeDescriptionElement {
+		// This can be after endTime if we're going over the day boundary
 		public final LocalTime startTime;
 		public final LocalTime endTime;
 		private final static Pattern timePattern =
 			Pattern.compile("(1?\\d)((?:|.)[0-5]\\d)?(am|pm)?( ?- ?)(1?\\d)((?:|.)[0-5]\\d)?(am|pm)?");
 
-		public final static TimeRange WHOLE_DAY = new TimeRange(new LocalTime(0,0), new LocalTime(23,59));
+		public final static LocalTime START_OF_DAY = new LocalTime(0,0);
+		public final static LocalTime END_OF_DAY = new LocalTime(23,59);
+		public final static TimeRange WHOLE_DAY = new TimeRange(START_OF_DAY, END_OF_DAY);
 
 		public TimeRange(LocalTime startTime, LocalTime endTime) {
-			assert(this.startTime.compareTo(this.endTime) <= 0);
 			this.startTime = startTime;
 			this.endTime = endTime;
 		}
@@ -299,7 +307,12 @@ import com.natpryce.maybe.Maybe;
 			}
 			else {
 				if (startHourBase >= endHourBase) {
-					startHour = startHourBase;
+					if (endHour >= 12) {
+						startHour = startHourBase;
+					}
+					else {
+						startHour = startHourBase + 12;
+					}
 				}
 				else {
 					startHour = (endHour > 12) ? startHourBase + 12 : startHourBase;
@@ -354,7 +367,7 @@ import com.natpryce.maybe.Maybe;
 		}
 	}
 
-	public static final class Comma implements TimeDescriptionElement {
+	/* package */ static final class Comma implements TimeDescriptionElement {
 		public static Maybe<ParseResult<Comma>> parse(String desc) {
 			if (desc.startsWith(",")) {
 				return Maybe.definitely(new ParseResult<Comma>(new Comma(), desc.substring(1)));
@@ -379,9 +392,9 @@ import com.natpryce.maybe.Maybe;
 	}
 
 	// I could probably make this an abstract class using generics, but why bother?
-	public interface TimeDescriptionElement { }
+	/* package */ interface TimeDescriptionElement { }
 
-	public static class ParseResult<T extends TimeDescriptionElement> {
+	/* package */ static class ParseResult<T extends TimeDescriptionElement> {
 		public final T element;
 		public final String remainder;
 		public ParseResult(T element, String remainder) {

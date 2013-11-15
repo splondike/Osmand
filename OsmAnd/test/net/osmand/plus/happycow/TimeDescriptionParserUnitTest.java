@@ -15,7 +15,7 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalTime;
 
 public class TimeDescriptionParserUnitTest extends TestCase {
-	public void testParseSetence() {
+	public void testParseSentence() {
 		String testSentence = "Mon-Sun 11-3pm, something irrelevant, Tue 9am - 11am";
 		List<TimeDescriptionElement> expectedParse = Arrays.asList(
 			new DayRange(DateTimeConstants.MONDAY, DateTimeConstants.SUNDAY),
@@ -54,6 +54,14 @@ public class TimeDescriptionParserUnitTest extends TestCase {
 		assertFalse(DayRange.parse(sentence).isKnown());
 	}
 
+	public void testDayRangeParseDaily() {
+		String sentence = "daily starts";
+		ParseResult<DayRange> result = DayRange.parse(sentence).iterator().next();
+		assertEquals(" starts", result.remainder);
+		assertEquals(Integer.valueOf(1), result.element.startDay);
+		assertEquals(Integer.valueOf(7), result.element.endDay);
+	}
+
 	public void testTimeRangeParseFullySpecified() {
 		String sentence = "9:30am- 2pm starts";
 		ParseResult<TimeRange> result = TimeRange.parse(sentence).iterator().next();
@@ -70,7 +78,7 @@ public class TimeDescriptionParserUnitTest extends TestCase {
 		assertEquals(new LocalTime(14, 0), result.element.endTime);
 	}
 
-	public void testTimeRangeParseInferPm() {
+	public void testTimeRangeParseInferAfternoonPm() {
 		String sentence = "1- 2pm starts";
 		ParseResult<TimeRange> result = TimeRange.parse(sentence).iterator().next();
 		assertEquals(" starts", result.remainder);
@@ -78,12 +86,12 @@ public class TimeDescriptionParserUnitTest extends TestCase {
 		assertEquals(new LocalTime(14, 0), result.element.endTime);
 	}
 
-	public void testTimeRangeParseDaily() {
-		String sentence = "daily starts";
+	public void testTimeRangeParseInferNightPm() {
+		String sentence = "11- 2am starts";
 		ParseResult<TimeRange> result = TimeRange.parse(sentence).iterator().next();
 		assertEquals(" starts", result.remainder);
-		assertEquals(new LocalTime(0, 0), result.element.startTime);
-		assertEquals(new LocalTime(23, 59, 59), result.element.endTime);
+		assertEquals(new LocalTime(23, 0), result.element.startTime);
+		assertEquals(new LocalTime(2, 0), result.element.endTime);
 	}
 
 	public void testTimeRangeParseNoon() {

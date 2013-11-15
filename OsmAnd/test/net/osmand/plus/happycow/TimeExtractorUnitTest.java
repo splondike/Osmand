@@ -36,9 +36,13 @@ public class TimeExtractorUnitTest extends TestCase {
 			{"daily 7:30am-11pm", buildIntervals(monToSun.toArray(new DayLocalInterval[]{}))},
 			{"Mon lunch 11:30am-2:30pm, dinner 5-10pm, closed Sun, Sat closed",
 				buildIntervals(buildCase(1,11,30,14,30), buildCase(1,17,0,22,0))},
-			{"Sun-Mon, Tue 11am-9pm", Maybe.unknown()},
 			{"Mon 11am-9.30pm", buildIntervals(buildCase(1,11,0,21,30))},
-			{"Mon 10-12am, Tue 10-2am", buildIntervals(buildCase(1,22,0,21,30))},
+			{"Tue 11am-2am", buildIntervals(buildCase(2,11,0,23,59),buildCase(3,0,0,2,0))},
+			{"Mon 10-12am, Tue 10-2am",
+				buildIntervals(buildCase(1,22,0,23,59),buildCase(2,0,0,0,0),buildCase(2,22,0,23,59),buildCase(3,0,0,2,0))},
+			// Intended parse failure cases
+			{"Sun-Mon, Tue 11am-9pm", Maybe.unknown()},
+			{"Mon, Wed 11am-2am", Maybe.unknown()},
 		};
 
 		for (Object[] testCase : testCases) {
@@ -49,10 +53,11 @@ public class TimeExtractorUnitTest extends TestCase {
 
 			if (expected.isKnown()) {
 				assertTrue(actual.isKnown());
-				assertTrue(actual.iterator().next().toString(), expected.iterator().next().equivalent(actual.iterator().next()));
+				assertTrue(input + " " + actual.iterator().next().toString(),
+						expected.iterator().next().equivalent(actual.iterator().next()));
 			}
 			else {
-				assertFalse(actual.isKnown());
+				assertFalse(input, actual.isKnown());
 			}
 		}
 	}
@@ -76,8 +81,8 @@ public class TimeExtractorUnitTest extends TestCase {
 	 * The whole day.
 	 */
 	private static DayLocalInterval buildCase(Integer day) {
-		DayLocalTime start = new DayLocalTime(day, TimeDescriptionParser.TimeRange.WHOLE_DAY.startTime);
-		DayLocalTime end = new DayLocalTime(day, TimeDescriptionParser.TimeRange.WHOLE_DAY.endTime);
+		DayLocalTime start = new DayLocalTime(day, TimeDescriptionParser.TimeRange.START_OF_DAY);
+		DayLocalTime end = new DayLocalTime(day, TimeDescriptionParser.TimeRange.END_OF_DAY);
 		return new DayLocalInterval(start, end);
 	}
 }
