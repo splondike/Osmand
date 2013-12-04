@@ -16,7 +16,7 @@ public class TimeExtractorUnitTest extends TestCase {
 	@Test
 	public void testExtractTimeSentence() {
 		String none = "Open is the word we're looking for, but at the end. I.e. here.";
-		String some = "This time the word is correct. Open at some time. ";
+		String some = "This time the placement is correct. Open at some time. ";
 
 		assertEquals(false, TimeExtractor.extractTimeSentence(none).isKnown());
 		assertEquals(Maybe.definitely("at some time"), TimeExtractor.extractTimeSentence(some));
@@ -29,6 +29,7 @@ public class TimeExtractorUnitTest extends TestCase {
 		}
 		Object[][] testCases = {
 			{"Mon-Tue", buildIntervals(buildCase(1), buildCase(2))},
+			{"Monday-Tue", buildIntervals(buildCase(1), buildCase(2))},
 			{"Mon 8am-5:30pm", buildIntervals(buildCase(1,8,0,17,30))},
 			{"Mon 8am-5:30pm, Fri 7:30am-4pm", buildIntervals(buildCase(1,8,0,17,30), buildCase(5,7,30,16,0))},
 			{"Sun-Mon 8am-5:30pm", buildIntervals(buildCase(7,8,0,17,30), buildCase(1,8,0,17,30))},

@@ -170,7 +170,8 @@ import com.natpryce.maybe.Maybe;
 	}
 
 	/* package */ static class Day implements TimeDescriptionElement, Iterable<Integer> {
-		private static final String[] days = new String[] {"mon", "tue", "wed", "thur", "fri", "sat", "sun"};
+		private static final String[] longDays = new String[] {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"};
+		private static final String[] shortDays = new String[] {"mon", "tue", "wed", "thur", "fri", "sat", "sun"};
 		public final Integer day;
 		public Day(Integer day) {
 			assert(day > 0 && day < 8);
@@ -183,6 +184,17 @@ import com.natpryce.maybe.Maybe;
 		}
 
 		public static Maybe<ParseResult<Day>> parse(String desc) {
+			// Check this first, because the shortDays are a substring of the longDays
+			final Maybe<ParseResult<Day>> longResult = parse(longDays, desc);
+			if (longResult.isKnown()) {
+				return longResult;
+			}
+			else {
+				return parse(shortDays, desc);
+			}
+		}
+
+		private static Maybe<ParseResult<Day>> parse(String[] days, String desc) {
 			for (Integer i=0;i<days.length;i++) {
 				Integer len = days[i].length();
 				boolean endsWithNonAlpha = (desc.length() <= len) || !isAlpha(desc.charAt(len));
@@ -226,7 +238,7 @@ import com.natpryce.maybe.Maybe;
 
 		@Override
 		public String toString() {
-			return "Day [" + days[this.day] + "]";
+			return "Day [" + longDays[this.day] + "]";
 		}
 
 		@Override
