@@ -1,6 +1,7 @@
 package net.osmand.plus.views;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,6 @@ import net.osmand.plus.ContextMenuAdapter;
 import net.osmand.plus.ContextMenuAdapter.OnContextMenuClick;
 import net.osmand.plus.FavouritesDbHelper;
 import net.osmand.plus.R;
-import net.osmand.plus.happycow.TimeExtractor;
-import net.osmand.plus.happycow.WeekIntervals;
 import net.osmand.plus.render.UserFavouriteIcons;
 
 import org.joda.time.DateTime;
@@ -29,14 +28,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
-<<<<<<< HEAD
-=======
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
->>>>>>> Highlighting of happy cow favourites.
 import android.widget.Toast;
-
-import com.natpryce.maybe.Maybe;
+import timesparser.Maybe;
+import timesparser.TimeExtractor;
+import timesparser.WeekIntervals;
 
 public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.IContextMenuProvider {
 
@@ -100,7 +97,8 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 					int x = (int) tileBox.getPixXFromLatLon(o.getLatitude(), o.getLongitude());
 					int y = (int) tileBox.getPixYFromLatLon(o.getLatitude(), o.getLongitude());
 
-					Bitmap favoriteIcon = this.userFavouriteIcons.get(o.getCategory()).otherwise(this.defaultFavoriteIcon);
+					Bitmap favoriteIcon = this.userFavouriteIcons.get(o.getCategory());
+					if (favoriteIcon == null) favoriteIcon = this.defaultFavoriteIcon;
 
 					BitmapDrawable favIconDrawable = new BitmapDrawable(resources, favoriteIcon);
 					Rect bounds = new Rect(x - favoriteIcon.getWidth() / 2, y - favoriteIcon.getHeight() / 2,
@@ -116,19 +114,54 @@ public class FavoritesLayer extends OsmandMapLayer implements ContextMenuLayer.I
 		}
 	}
 
-	private Map<String, Maybe<WeekIntervals>> intervalsCache = new HashMap<String, Maybe<WeekIntervals>>();
+	private Map<String, WeekIntervals> intervalsCache = new HashMap<String, WeekIntervals>();
 	private boolean isNotOpen(String description) {
-		Maybe<WeekIntervals> intervals = intervalsCache.get(description);
+		WeekIntervals intervals = intervalsCache.get(description);
 		if (intervals == null) {
-			intervals = TimeExtractor.parseTimes(description);
+			intervals = FavoritesLayer.parseTimes(description);
 			this.intervalsCache.put(description, intervals);
 		}
-		if (intervals.isKnown()) {
-			return !intervals.iterator().next().contains(new DateTime());
+		if (intervals != null) {
+			return !intervals.contains(Calendar.getInstance());
 		}
 		else {
 			return false;
 		}
+	}
+
+	private static WeekIntervals parseTimes(String description) {
+		String timeSentence = FavoritesLayer.extractTimeSentence(description);
+		if (timeSentence != null) {
+			Maybe<WeekIntervals> result = TimeExtractor.parseTimes(timeSentence);
+			if (result.isKnown()) {
+				return result.iterator().next();
+			}
+			else {
+				return null;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Extracts the time sequence from a description if it exists, minus fluff like fullstops and 'Open '.
+	 */
+	private static String extractTimeSentence(String description) {
+		String trimmedDescription = description.trim();
+		Boolean endsWithPeriod = trimmedDescription.endsWith("\\.");
+		String withoutTrailingPeriod = endsWithPeriod ? description.substring(0, description.length() - 1) : trimmedDescription;
+
+		String[] sentences = withoutTrailingPeriod.split("\\.");
+		if (sentences.length > 0) {
+			String lastSentence = sentences[sentences.length - 1].trim();
+			if (lastSentence.startsWith("Open ")) {
+				String withoutOpen = lastSentence.replaceFirst("Open ", "");
+				return withoutOpen;
+			}
+		}
+
+		return null;
 	}
 	
 	

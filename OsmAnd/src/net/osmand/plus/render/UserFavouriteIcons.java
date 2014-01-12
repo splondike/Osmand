@@ -7,8 +7,6 @@ import java.util.Map;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.natpryce.maybe.Maybe;
-
 /**
  * Provides and caches references to the user supplied favourite icons.
  */
@@ -20,29 +18,29 @@ public class UserFavouriteIcons {
 		this.iconPath = path;
 	}
 
-	public Maybe<Bitmap> get(String key) {
+	/**
+	 * Looks up the icon corresponding to key.
+	 *
+	 * @param key The name of the icon to find.
+	 * @return The bitmap, or null if it couldn't be found.
+	 */
+	public Bitmap get(String key) {
 		if (this.iconCache.containsKey(key)) {
-			return Maybe.definitely(this.iconCache.get(key));
+			return this.iconCache.get(key);
 		}
 		else {
-			Maybe<Bitmap> icon = this.loadIcon(key);
-			if (icon.isKnown()) {
-				this.iconCache.put(key, icon.iterator().next());
+			Bitmap icon = this.loadIcon(key);
+			if (icon != null) {
+				this.iconCache.put(key, icon);
 			}
 
 			return icon;
 		}
 	}
 
-	private Maybe<Bitmap> loadIcon(String key) {
+	private Bitmap loadIcon(String key) {
 		File file = new File(this.iconPath, key + ".png");
 
-		Bitmap icon = BitmapFactory.decodeFile(file.getAbsolutePath());
-		if (icon == null) {
-			return Maybe.unknown();
-		}
-		else {
-			return Maybe.definitely(icon);
-		}
+		return BitmapFactory.decodeFile(file.getAbsolutePath());
 	}
 }
